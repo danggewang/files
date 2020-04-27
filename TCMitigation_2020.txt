@@ -1,0 +1,71 @@
+Associate Editor
+Comments to the Author:
+Reviewer 2 has major concerns about the paper and missing details of the implementation.
+
+**********
+Reviewers' Comments
+
+Please note that some reviewers may have included additional comments in a separate file. If a review contains the note "see the attached file" under Section III A - Public Comments, you will need to log on to ScholarOne Manuscripts  to view the file. After logging in, select the Author Center, click on the "Manuscripts with Decisions" queue and then clicking on the "view decision letter" link for this manuscript. You must scroll down to the very bottom of the letter to see the file(s), if any.  This will open the file that the reviewer(s) or the Associate Editor included for you along with their review.
+
+Reviewer: 1
+
+Public Comments (these will be made available to the author)
+This manuscript proposed new mechanisms of scaling frequency and hardware prefetchers to mitigate the side-channel attacks on the Last Level Cache. One big advantage of this work compared to past ones is that it does not need to redesign the hardware.
+
+I do enjoy reading the paper. It is well written with sufficient background, relevant works. The methods in this paper are also reasonable, with solid experimental evaluations and analysis.
+
+There are still a couple of questions for the authors to address to further improve the paper:
+
+1. It is confused which methods this paper adopted in their experiments: is it changing the parameters of CPU frequency, or hardware prefetchers? It would be great if the authors can add a more detailed description for Figure 5.
+
+2. How to collect and process those data is not clear in the experimental evaluations and analysis. It is better to give information about the tools used for data collection.
+
+3. Minor suggestions: some phrases are used too many times in the paper, e.g., “to this aim”, which can decrease the written quality. The authors can use alternatives to replace those phrases.
+
+
+Reviewer: 2
+
+Public Comments (these will be made available to the author)
+This paper proposes to mitigate cache-based side-channel attacks by scaling frequency and adapting prefetchers. The idea seems promising. However, there is still much room to improve to make the results more solid.
+
+The main concern is the effectiveness of the proposed scheme. The results presented in the paper are evaluated using the original L3 side-channel attacks. However, the adversary would also try different strategies to bypass these mitigations. For scaling frequency, though it is difficult to have a single threshold to distinguish between cache hits and cache misses, the adversary could use a higher threshold, say > 800 cycles to confirm cache misses and a lower threshold, say < 400 cycles to confirm cache hits, and consider access time in between as uncertain states. During eviction sets creation, when checking self-eviction, the adversary could re-run the check if she gets uncertain states. The authors should consider more potential attack variants to better demonstrate the effectiveness of the proposed scheme.
+
+Second, many details about the randomization schemes are missing. For example, how frequently the frequency will be changed, every millisecond or every second? The randomization patterns will affect the strategy of the adversary. If it takes a long time before switching to a different frequency, the adversary might spend some time to measure the current frequency, and choose a threshold accordingly.
+
+Third, probing results are presented as heatmaps. I would suggest the authors provide some quantifiable metrics to measure the effectiveness of the proposed scheme. One potential metric the authors could consider is the entropy of the observed access times during the attack.
+
+For the performance overhead, it is not convincing to claim that Scenario D achieves the most effective protection (highest error rate) with 20% overhead, better than the state-of-the-art work, which is 32.66%. Because the error rates are evaluated using the original L3 side-channel attacks. As mentioned early, the adversary can change her strategy. If Scenario B1 (second-best given the error rates presented in the paper) becomes the best when considering more attacks, its 40% performance overhead will exceed the state-of-the-art work.
+
+Reviewer: 3
+
+Public Comments (these will be made available to the author)
+This paper describes an interesting defense for a cache side-channel attack (SCA) like Prime+Probe that works by adding random "noise" to the adversary's observations. The paper studies two mechanisms to add noise - (1) randomly enabling the cache pre-fetchers, causing the adversary to observe spurious cache-misses and (2) randomly changing the operating frequency, causing the adversary to mis-classify cache-hits as cache-misses. The authors show that these mechanisms can cause an attack trying to decipher AES and RSA keys to have an error-rate of ~70% (vs ~4% without these mechanisms). At the same time, these mechanisms incur performance overhead of <20% (vs previous work that incurs 33% while only using frequency scaling). 
+
+The defense is simple & easy to implement and the paper evaluates many variants of the defense to attain the high error-rates for the attack. The paper is also well-written and easy-to-read. However, I am unsure if the defense holds-up in the presence of an adaptive adversary (who I think can de-noise the observations with some simple techniques). However, I am open to re-considering my score if the authors can address my concerns. 
+
+##### STRENGTHS ##### 
+
+- **Simplicity of Idea**:  The proposed mechanisms to add noise to the attack (scaling the frequency, enabling/disabling the pre-fetcher) are quite simple and can be easily implemented in the hyper-visor. So even though the idea of adding noise is not new, the proposed work is quite interesting! 
+
+- **Good Writing Quality & Results**: The paper evaluates several variants of the defense (i.e. different operating frequencies and different types of pre-fetchers) to maximize the error-rate during the probe-phase of the attack, providing sufficient insight into why the defense works. 
+
+##### WEAKNESSES ##### 
+
+- **No evaluation/discussion of an adaptive-attacker** : The defense does not account for any strategies the adversary may adopt to reduce/remove the noise in its observations, such as calibration of threshold to current frequency, or performing eviction-set discovery offline. 
+
+-- 1. Calibration by adversary to infer current operating frequency: At what time-granularity is the operating frequency switched? Is there any reason the adversary cannot perform calibration to infer the current operating frequency before it gets switched?  For example, the adversary performs Probes on N-cache-sets with known Hit or Miss behavior, measures the cycles for Hits & Miss probes, and infers the current operating frequency & appropriate threshold, and then launches the attack. If latency for switching the frequency is 10ms, the next switch would probably not happen for some multiple of 10ms. In 10ms, it seems like the adversary can perform ~10,000 calibration-probes (assuming 1000cycles per probe @1ns/cycle), that should be more than sufficient to infer the threshold for current operating frequency. 
+
+-- 2. Noise-injection during eviction-set discovery process:  Sec-5.1 shows that the discovery of eviction-set is made much harder by noise injected by the defense.* Is it typical for an adversary to discover eviction-sets while the defense is activated? I would assume the adversary can build the eviction-sets offline using large-pages (when the mitigation is not activated) and reuse them at attack-time OR directly construct eviction-sets using set-indexing functions reverse-engineered in previous literature. Also, SCA-detectors such as Cyclone-MICRO'19 that detect cross-process contention would not
+detect the eviction-set discovery process; so the defense would not be activated in this situation.
+
+* I understand that Section 5.2 subsequently assumes eviction-sets are constructed exactly without errors (in absence of the defense), which is great! But I was left wondering whether Section 5.1 and Fig-6 evaluate a realistic setting.   
+
+##### SPECIFIC QUESTIONS FOR AUTHORS ##### 
+
+1. How would your defense account for an adversary that can calibrate the current operating frequency? How frequently do you switch the current frequency? 
+
+2. The pre-fetcher based noise-injection is harder to de-noise for the adversary; But did you evaluate a setting where the adversary attempts to throttle the pre-fetcher (e.g. only accessing 1 address per 4KB page) ? 
+
+3. Is noise-injection relevant to eviction-set discovery process? 
+
+4. How do you measure "cycles" for Probe in Fig-3? If you use "rdtsc" instruction which samples the Timestamp-Counter incremented on every CPU-cycle, a fast-Probe with just n-cache-hits should be "n x  CPU-cycles for LLC-hit" (which should be constant irrespective of CPU-frequency), Whereas, slow-Probe having cache-misses should have a higher-cycle count with a higher-frequency (memory-access-latency in nanoseconds is constant). However, I see the opposite behavior in Fig-3 (Probe in higher-frequency has lower cycle-count), which is quite confusing to me. Maybe I am missing something here
